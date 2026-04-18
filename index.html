@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>C.E.S.T.I.S - Payroll Management System</title>
+<title>Payroll Management System</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- OTPAuth library for TOTP (2FA) -->
 <script src="https://cdn.jsdelivr.net/npm/otpauth@9.2.1/dist/otpauth.umd.min.js"></script>
@@ -24,101 +24,109 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
---bg:#0c1220;--surface:#141c2e;--card:#1a2540;--border:#253354;
---primary:#3b82f6;--primary-glow:rgba(59,130,246,.15);
+--bg:#f4f6fb;--surface:#ffffff;--card:#ffffff;--border:#e5e9f2;
+--primary:#4f46e5;--primary-glow:rgba(79,70,229,.10);
 --accent:#f59e0b;--accent2:#10b981;--danger:#ef4444;
---text:#e2e8f0;--text-dim:#94a3b8;--text-muted:#64748b;
---gold:#f59e0b;--green:#10b981;--red:#ef4444;
+--text:#0f172a;--text-dim:#475569;--text-muted:#94a3b8;
+--gold:#d97706;--green:#059669;--red:#dc2626;
+--shadow-sm:0 1px 2px rgba(15,23,42,.04);
+--shadow-md:0 4px 14px rgba(15,23,42,.06);
+--shadow-lg:0 18px 40px rgba(15,23,42,.10);
 }
 html{font-size:18px}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;letter-spacing:.01em}
 .app{display:flex;flex-direction:column;min-height:100vh}
 
 /* Top Navigation Bar */
-.sidebar{width:100%;background:var(--surface);border-bottom:1px solid var(--border);padding:0;display:flex;flex-direction:column;position:sticky;top:0;z-index:100}
-.sidebar-top-row{display:flex;align-items:center;padding:.6rem 1.5rem;border-bottom:1px solid var(--border);gap:1rem}
+.sidebar{width:100%;background:var(--surface);border-bottom:1px solid var(--border);padding:0;display:flex;flex-direction:column;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm)}
+.sidebar-top-row{display:flex;align-items:center;padding:.85rem 1.75rem;border-bottom:1px solid var(--border);gap:1rem}
 .sidebar-brand{padding:0;border-bottom:none;margin-bottom:0;display:flex;align-items:center;gap:.75rem;flex-shrink:0}
-.sidebar-brand h1{font-size:.85rem;font-weight:700;color:var(--accent);letter-spacing:2px;text-transform:uppercase}
-.sidebar-brand p{font-size:.7rem;color:var(--text-dim);margin-top:0;letter-spacing:.5px}
+.brand-mark{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--primary),#7c3aed);color:#fff;font-weight:700;font-size:1rem;letter-spacing:.04em;box-shadow:0 6px 18px rgba(79,70,229,.30)}
+.sidebar-brand h1{font-size:1rem;font-weight:700;color:var(--text);letter-spacing:.02em;text-transform:none}
+.sidebar-brand p{font-size:.72rem;color:var(--text-muted);margin-top:.1rem;letter-spacing:.4px;text-transform:uppercase}
 .sidebar-top-right{display:flex;align-items:center;gap:.75rem;margin-left:auto}
-.sidebar-nav{flex:none;padding:.25rem 1rem;display:flex;align-items:center;gap:.25rem;overflow-x:auto}
-.nav-item{display:flex;align-items:center;gap:.5rem;padding:.6rem 1rem;border-radius:8px;cursor:pointer;color:var(--text-dim);font-size:.82rem;font-weight:500;transition:all .2s;margin-bottom:0;white-space:nowrap}
-.nav-item:hover{background:var(--primary-glow);color:var(--text)}
-.nav-item.active{background:transparent;color:var(--primary);box-shadow:none;border-bottom:2px solid var(--primary);border-radius:0}
+.sidebar-nav{flex:none;padding:.5rem 1.25rem;display:flex;align-items:center;gap:.35rem;overflow-x:auto}
+.nav-item{display:flex;align-items:center;gap:.55rem;padding:.55rem 1rem;border-radius:10px;cursor:pointer;color:var(--text-dim);font-size:.82rem;font-weight:600;transition:all .15s;margin-bottom:0;white-space:nowrap;position:relative}
+.nav-item:hover{background:var(--primary-glow);color:var(--primary)}
+.nav-item.active{background:var(--primary);color:#fff;box-shadow:0 6px 16px rgba(79,70,229,.30)}
+.nav-item.active:hover{background:#4338ca;color:#fff}
 .nav-item .icon{font-size:1rem;width:18px;text-align:center}
 .sidebar-footer{padding:.4rem .75rem;border-top:none;border-left:1px solid var(--border);font-size:.7rem;color:var(--text-muted);display:flex;align-items:center;gap:.5rem;flex-shrink:0}
 
 /* Main Content */
-.main{margin-left:0;flex:1;padding:1.5rem 2rem;padding-top:0}
+.main{margin-left:0;flex:1;padding:1.5rem 2rem;padding-top:1.5rem;max-width:1400px;width:100%;margin-left:auto;margin-right:auto}
 .page{display:none}
 .page.active{display:block}
 
 /* Header Bar */
-.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
-.page-header h2{font-size:1.35rem;font-weight:700;color:var(--text)}
-.page-header .subtitle{font-size:.8rem;color:var(--text-dim);margin-top:.15rem}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap}
+.page-header h2{font-size:1.6rem;font-weight:700;color:var(--text);letter-spacing:-.01em}
+.page-header .subtitle{font-size:.85rem;color:var(--text-dim);margin-top:.2rem}
 
 /* Cards */
-.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;position:relative;overflow:hidden}
-.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.25rem 1.4rem;position:relative;overflow:hidden;box-shadow:var(--shadow-sm);transition:transform .15s, box-shadow .15s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:4px}
 .stat-card.blue::before{background:var(--primary)}
 .stat-card.gold::before{background:var(--gold)}
 .stat-card.green::before{background:var(--green)}
 .stat-card.red::before{background:var(--red)}
-.stat-card .label{font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
-.stat-card .value{font-size:1.5rem;font-weight:700;margin-top:.35rem;font-family:'JetBrains Mono',monospace}
-.stat-card .sub{font-size:.7rem;color:var(--text-dim);margin-top:.25rem}
+.stat-card .label{font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+.stat-card .value{font-size:1.7rem;font-weight:700;margin-top:.4rem;font-family:'JetBrains Mono',monospace;color:var(--text)}
+.stat-card .sub{font-size:.72rem;color:var(--text-dim);margin-top:.3rem}
 
 /* Panels */
-.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:1.5rem;overflow:hidden}
-.panel-head{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.25rem;border-bottom:1px solid var(--border)}
-.panel-head h3{font-size:.95rem;font-weight:600}
-.panel-body{padding:1.25rem}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:1.5rem;overflow:hidden;box-shadow:var(--shadow-sm)}
+.panel-head{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.4rem;border-bottom:1px solid var(--border);background:#fafbff}
+.panel-head h3{font-size:.95rem;font-weight:700;color:var(--text)}
+.panel-body{padding:1.4rem}
 
 /* Buttons */
-.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border:none;border-radius:6px;font-family:inherit;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .15s}
-.btn-primary{background:var(--primary);color:#fff}
-.btn-primary:hover{background:#2563eb;box-shadow:0 4px 12px rgba(59,130,246,.3)}
-.btn-success{background:var(--green);color:#fff}
-.btn-success:hover{background:#059669}
-.btn-warning{background:var(--gold);color:#000}
-.btn-danger{background:var(--red);color:#fff}
-.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-dim)}
-.btn-ghost:hover{border-color:var(--primary);color:var(--primary)}
-.btn-sm{padding:.35rem .75rem;font-size:.75rem}
+.btn{display:inline-flex;align-items:center;gap:.45rem;padding:.55rem 1.1rem;border:none;border-radius:9px;font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.25)}
+.btn-primary:hover{background:#4338ca;box-shadow:0 6px 16px rgba(79,70,229,.35)}
+.btn-success{background:var(--green);color:#fff;box-shadow:0 4px 12px rgba(5,150,105,.20)}
+.btn-success:hover{background:#047857}
+.btn-warning{background:var(--gold);color:#fff}
+.btn-danger{background:var(--red);color:#fff;box-shadow:0 4px 12px rgba(220,38,38,.20)}
+.btn-ghost{background:#fff;border:1px solid var(--border);color:var(--text-dim)}
+.btn-ghost:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-glow)}
+.btn-sm{padding:.4rem .8rem;font-size:.75rem}
 .btn-group{display:flex;gap:.5rem;flex-wrap:wrap}
 
 /* Tables */
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
-th{text-align:left;padding:.65rem .75rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border);background:rgba(0,0,0,.2);white-space:nowrap}
-td{padding:.6rem .75rem;font-size:.82rem;border-bottom:1px solid rgba(37,51,84,.5);white-space:nowrap}
-tr:hover td{background:rgba(59,130,246,.04)}
+th{text-align:left;padding:.7rem .85rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);font-weight:700;border-bottom:1px solid var(--border);background:#f8fafc;white-space:nowrap}
+td{padding:.7rem .85rem;font-size:.82rem;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap}
+tbody tr:nth-child(even) td{background:#fafbff}
+tbody tr:hover td{background:var(--primary-glow)}
 .mono{font-family:'JetBrains Mono',monospace;font-size:.78rem}
 .text-right{text-align:right}
 .text-center{text-align:center}
-.tag{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.7rem;font-weight:600}
-.tag-ft{background:rgba(59,130,246,.15);color:#60a5fa}
-.tag-pt{background:rgba(245,158,11,.15);color:#fbbf24}
+.tag{display:inline-block;padding:.2rem .6rem;border-radius:9999px;font-size:.7rem;font-weight:700}
+.tag-ft{background:rgba(79,70,229,.10);color:var(--primary)}
+.tag-pt{background:rgba(245,158,11,.12);color:var(--gold)}
 
 /* Forms */
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
-.form-group{display:flex;flex-direction:column;gap:.3rem}
-.form-group label{font-size:.75rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.3px}
-.form-group input,.form-group select,.form-group textarea{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:.55rem .75rem;color:var(--text);font-family:inherit;font-size:.85rem}
-.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.1rem}
+.form-group{display:flex;flex-direction:column;gap:.4rem}
+.form-group label{font-size:.74rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.4px}
+.form-group input,.form-group select,.form-group textarea{background:#fff;border:1px solid var(--border);border-radius:10px;padding:.7rem .85rem;color:var(--text);font-family:inherit;font-size:.88rem;transition:border .15s, box-shadow .15s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
 .form-group input[type="number"]{font-family:'JetBrains Mono',monospace}
+.form-group .hint{font-size:.72rem;color:var(--text-muted);margin-top:.1rem}
 
 /* Modal */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 .modal-overlay.show{display:flex}
-.modal{background:var(--card);border:1px solid var(--border);border-radius:14px;width:90%;max-width:600px;max-height:85vh;overflow-y:auto}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;width:90%;max-width:600px;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
 .modal-header{display:flex;justify-content:space-between;align-items:center;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border)}
-.modal-header h3{font-size:1rem;font-weight:600}
-.modal-close{background:none;border:none;color:var(--text-dim);font-size:1.3rem;cursor:pointer}
+.modal-header h3{font-size:1.05rem;font-weight:700;color:var(--text)}
+.modal-close{background:none;border:none;color:var(--text-dim);font-size:1.5rem;cursor:pointer;line-height:1}
 .modal-body{padding:1.5rem}
-.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.5rem;justify-content:flex-end}
+.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.5rem;justify-content:flex-end;background:#fafbff}
 
 /* Payslip Print */
 .payslip-container{display:none}
@@ -515,8 +523,8 @@ tr:hover td{background:rgba(59,130,246,.04)}
         <div class="login-syncing-sub" id="loginSyncOverlaySub">Checking for your account credentials</div>
       </div>
       <div class="login-brand">
-        <h1>C.E.S.T.I.S</h1>
-        <p>Payroll Management System</p>
+        <h1>Payroll System</h1>
+        <p>Local-only mode</p>
       </div>
       <div id="loginCloudBanner" class="login-cloud-banner" style="display:none">
         <span class="banner-icon" id="loginBannerIcon"></span>
@@ -662,8 +670,11 @@ tr:hover td{background:rgba(59,130,246,.04)}
     <!-- Top row: Brand + User + Cloud status -->
     <div class="sidebar-top-row">
       <div class="sidebar-brand">
-        <h1>C.E.S.T.I.S</h1>
-        <p>Payroll System</p>
+        <span class="brand-mark" id="brandMark">P</span>
+        <div>
+          <h1 id="brandName">Payroll System</h1>
+          <p id="brandTagline">Modern payroll management</p>
+        </div>
       </div>
       <!-- Logged-in user badge & cloud sync removed — local-only mode -->
       <div class="sidebar-user" id="sidebarUser" style="display:none"></div>
@@ -689,6 +700,7 @@ tr:hover td{background:rgba(59,130,246,.04)}
       <div class="nav-item" onclick="showPage('payslips')"><span class="icon">🧾</span><span class="nav-text">Payslips</span></div>
       <div class="nav-item" onclick="showPage('salaryrecords')"><span class="icon">📆</span><span class="nav-text">Salary Records</span></div>
       <div class="nav-item" onclick="showPage('deductions')"><span class="icon">📋</span><span class="nav-text">Tax Summary</span></div>
+      <div class="nav-item" onclick="showPage('organization')"><span class="icon">🏢</span><span class="nav-text">Organization</span></div>
       <div class="nav-item" onclick="showPage('permissions')"><span class="icon">🔑</span><span class="nav-text">Permissions</span><span class="notif-badge" id="permNotifBadge" style="display:none">0</span></div>
       <div class="nav-item settings-btn" onclick="showPage('settings')"><span class="icon">⚙️</span><span class="nav-text">Settings</span></div>
       <div class="nav-item" id="navUserMgmt" onclick="showPage('usermanagement')" style="display:none"><span class="icon">🛡️</span><span class="nav-text">User Management</span></div>
@@ -701,7 +713,7 @@ tr:hover td{background:rgba(59,130,246,.04)}
     <!-- ===== DASHBOARD ===== -->
     <div id="page-dashboard" class="page active">
       <div class="page-header">
-        <div><h2>Payroll Dashboard</h2><div class="subtitle">C.E.S.T.I.S — Overview</div></div>
+        <div><h2>Payroll Dashboard</h2><div class="subtitle" id="dashSubtitle">Organization overview</div></div>
         <div class="btn-group">
           <button class="btn btn-ghost" id="globalRefreshBtn" onclick="refreshAllData()" title="Refresh &amp; sync all data">🔄 Refresh</button>
           <button class="btn btn-ghost" onclick="exportAllData()">📥 Export Data</button>
@@ -866,6 +878,85 @@ tr:hover td{background:rgba(59,130,246,.04)}
       </div>
     </div>
 
+    <!-- ===== ORGANIZATION ===== -->
+    <div id="page-organization" class="page">
+      <div class="page-header">
+        <div><h2>Organization Information</h2><div class="subtitle">Branding and details printed on payslips and exports</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Identity</h3></div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Organization Name</label>
+              <input type="text" id="orgName" placeholder="e.g. Acme Holdings Ltd.">
+              <div class="hint">Shown in the sidebar and on every payslip header</div>
+            </div>
+            <div class="form-group">
+              <label>Short Name / Acronym</label>
+              <input type="text" id="orgShortName" placeholder="e.g. Acme">
+              <div class="hint">Used in export filenames and the brand mark</div>
+            </div>
+            <div class="form-group">
+              <label>Tagline</label>
+              <input type="text" id="orgTagline" placeholder="e.g. Payroll &amp; HR">
+            </div>
+            <div class="form-group">
+              <label>Brand Initial</label>
+              <input type="text" id="orgInitial" maxlength="2" placeholder="A">
+              <div class="hint">One or two letters shown in the brand badge</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Contact &amp; Address</h3></div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="form-group" style="grid-column:1 / -1">
+              <label>Address</label>
+              <textarea id="orgAddress" rows="2" placeholder="Street, City, Country"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="text" id="orgPhone" placeholder="+1 555 555 5555">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="orgEmail" placeholder="payroll@yourcompany.com">
+            </div>
+            <div class="form-group">
+              <label>Website</label>
+              <input type="text" id="orgWebsite" placeholder="https://yourcompany.com">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Registration &amp; Tax</h3></div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Tax ID / TRN</label>
+              <input type="text" id="orgTaxId" placeholder="Company tax identification number">
+            </div>
+            <div class="form-group">
+              <label>Registration No.</label>
+              <input type="text" id="orgRegNo" placeholder="Company registration number">
+            </div>
+            <div class="form-group">
+              <label>Payroll Contact</label>
+              <input type="text" id="orgPayrollContact" placeholder="e.g. Payroll Coordinator">
+            </div>
+          </div>
+          <div style="margin-top:1.4rem;display:flex;gap:.75rem">
+            <button class="btn btn-success" onclick="saveOrganization()">💾 Save Organization Info</button>
+            <button class="btn btn-ghost" onclick="renderOrganization()">↺ Reset Form</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== SETTINGS ===== -->
     <div id="page-settings" class="page">
       <div class="page-header">
@@ -886,7 +977,7 @@ tr:hover td{background:rgba(59,130,246,.04)}
             <div class="form-group"><label>Education Tax Employer (%)</label><input type="number" id="rateEdTaxEr" value="3.5" step="0.01"></div>
             <div class="form-group"><label>NHT Employee (%)</label><input type="number" id="rateNHTEmp" value="2" step="0.1"></div>
             <div class="form-group"><label>NHT Employer (%)</label><input type="number" id="rateNHTEr" value="3" step="0.1"></div>
-            <div class="form-group"><label>HEART/NSTA Employer (%)</label><input type="number" id="rateHeartEr" value="3" step="0.1"></div>
+            <div class="form-group"><label>Training Levy Employer (%)</label><input type="number" id="rateHeartEr" value="3" step="0.1"></div>
             <div class="form-group"><label>Income Tax Standard Rate (%)</label><input type="number" id="rateIncomeTax" value="25" step="0.1"></div>
             <div class="form-group"><label>Income Tax Higher Rate (%)</label><input type="number" id="rateIncomeTaxHigher" value="30" step="0.1"></div>
             <div class="form-group"><label>Higher Rate Annual Threshold ($)</label><input type="number" id="higherBracketAnnual" value="6000000" step="1"></div>
@@ -1115,13 +1206,44 @@ tr:hover td{background:rgba(59,130,246,.04)}
 
 <script>
 // ==================== DATA STORE ====================
-const STORAGE_KEY = 'cestisPayroll';
-const BACKUP_STORAGE_KEY = 'cestisPayroll_backup';
+const STORAGE_KEY = 'payrollData';
+const BACKUP_STORAGE_KEY = 'payrollData_backup';
+
+// One-time migration from legacy storage keys (silent if absent)
+(function migrateStorageKeys(){
+  try{
+    if(!localStorage.getItem(STORAGE_KEY)){
+      var legacy=localStorage.getItem('cestisPayroll');
+      if(legacy)localStorage.setItem(STORAGE_KEY,legacy);
+    }
+    if(!localStorage.getItem(BACKUP_STORAGE_KEY)){
+      var legacyBackup=localStorage.getItem('cestisPayroll_backup');
+      if(legacyBackup)localStorage.setItem(BACKUP_STORAGE_KEY,legacyBackup);
+    }
+  }catch(e){}
+})();
+
 let DATA = loadStore();
 let _dataDirty = false;
 let _autoSaveInterval = null;
 let _autoCloudSaveInterval = null;
 let _lastSaveHash = '';
+
+function defaultOrganization(){
+  return {
+    name:'Your Organization',
+    shortName:'Org',
+    tagline:'Modern payroll management',
+    initial:'O',
+    address:'',
+    phone:'',
+    email:'',
+    website:'',
+    taxId:'',
+    regNo:'',
+    payrollContact:'Payroll Coordinator'
+  };
+}
 
 function defaultData(){
   return {
@@ -1132,13 +1254,23 @@ function defaultData(){
       nisCeilingMonthly:416667,
       heartEr:3
     },
+    organization:defaultOrganization(),
     employees:[],
     payrollRuns:[]
   };
 }
 
 function loadStore(){
-  try{const d=localStorage.getItem(STORAGE_KEY);return d?JSON.parse(d):defaultData();}catch(e){return defaultData();}
+  try{
+    var d=localStorage.getItem(STORAGE_KEY);
+    var parsed=d?JSON.parse(d):defaultData();
+    if(!parsed.organization)parsed.organization=defaultOrganization();
+    else{
+      var defaults=defaultOrganization();
+      Object.keys(defaults).forEach(function(k){if(parsed.organization[k]===undefined)parsed.organization[k]=defaults[k];});
+    }
+    return parsed;
+  }catch(e){return defaultData();}
 }
 
 // Create a simple hash of data to detect changes
@@ -1283,7 +1415,7 @@ function showPage(name){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   const navItems=document.querySelectorAll('.nav-item');
-  const pages=['dashboard','employees','payroll','payslips','salaryrecords','deductions','permissions','settings','usermanagement'];
+  const pages=['dashboard','employees','payroll','payslips','salaryrecords','deductions','organization','permissions','settings','usermanagement'];
   const idx=pages.indexOf(name);
   if(idx>=0)navItems[idx].classList.add('active');
   if(name==='dashboard')renderDashboard();
@@ -1292,6 +1424,7 @@ function showPage(name){
   if(name==='payslips')populatePayslipSelects();
   if(name==='salaryrecords')renderSalaryRecords();
   if(name==='deductions')renderTaxSummary();
+  if(name==='organization')renderOrganization();
   if(name==='permissions')renderPermissions();
   if(name==='settings')loadSettings();
   if(name==='usermanagement')renderUserManagement();
@@ -1650,7 +1783,7 @@ function selectPayrollMonth(year,month){
   if(existingRun){
     const isAdmin=currentUser&&isAdminRole(currentUser.role);
     const hasEditPerm=hasPayrollEditPermission();
-    let html='<table><thead><tr><th>Employee</th><th class="text-right">Gross</th><th class="text-right">NIS</th><th class="text-right">Ed. Tax</th><th class="text-right">Income Tax</th><th class="text-right">NHT</th><th class="text-right">HEART</th><th class="text-right">Total Ded.</th><th class="text-right">Net Pay</th><th>Payslip</th>'+(hasEditPerm?'<th>Actions</th>':'')+'</tr></thead><tbody>';
+    let html='<table><thead><tr><th>Employee</th><th class="text-right">Gross</th><th class="text-right">NIS</th><th class="text-right">Ed. Tax</th><th class="text-right">Income Tax</th><th class="text-right">NHT</th><th class="text-right">Training Levy</th><th class="text-right">Total Ded.</th><th class="text-right">Net Pay</th><th>Payslip</th>'+(hasEditPerm?'<th>Actions</th>':'')+'</tr></thead><tbody>';
     let totals={gross:0,nis:0,ed:0,it:0,nht:0,heart:0,ded:0,net:0};
     const runIdx=DATA.payrollRuns.indexOf(existingRun);
     existingRun.results.forEach((r,ri)=>{
@@ -1775,7 +1908,7 @@ function calculatePayroll(){
     const edTaxEmp=statutoryIncome*(s.edTaxEmp/100);
     const edTaxEr=statutoryIncome*(s.edTaxEr/100);
 
-    // HEART/NSTA — employer only
+    // Training Levy — employer only
     const heartEr=gross*((s.heartEr||3)/100);
 
     // Income Tax — progressive: 25% up to $6M bracket, 30% above
@@ -1804,7 +1937,7 @@ function calculatePayroll(){
   });
 
   // Display results
-  let html='<table><thead><tr><th>Employee</th><th class="text-right">Gross</th><th class="text-right">NIS</th><th class="text-right">Ed. Tax</th><th class="text-right">Income Tax</th><th class="text-right">NHT</th><th class="text-right">HEART</th><th class="text-right">Total Ded.</th><th class="text-right">Net Pay</th></tr></thead><tbody>';
+  let html='<table><thead><tr><th>Employee</th><th class="text-right">Gross</th><th class="text-right">NIS</th><th class="text-right">Ed. Tax</th><th class="text-right">Income Tax</th><th class="text-right">NHT</th><th class="text-right">Training Levy</th><th class="text-right">Total Ded.</th><th class="text-right">Net Pay</th></tr></thead><tbody>';
   let totals={gross:0,nis:0,ed:0,it:0,nht:0,heart:0,ded:0,net:0};
   results.forEach(r=>{
     html+=`<tr><td>${r.empName}</td><td class="mono text-right">${fmt(r.gross)}</td><td class="mono text-right">${fmt(r.nisEmp)}</td><td class="mono text-right">${fmt(r.edTaxEmp)}</td><td class="mono text-right">${fmt(r.incomeTax)}</td><td class="mono text-right">${fmt(r.nhtEmp)}</td><td class="mono text-right">${fmt(r.heartEr)}</td><td class="mono text-right">${fmt(r.totalEmpDeductions)}</td><td class="mono text-right" style="color:var(--green);font-weight:600">${fmt(r.netPay)}</td></tr>`;
@@ -1986,11 +2119,21 @@ function generatePayslipPreview(){
 }
 
 function buildPayslipHTML(emp,result,date,ytd){
+  var org=DATA.organization||defaultOrganization();
+  var contactLine=org.payrollContact||'Payroll Coordinator';
+  var headerLines='';
+  if(org.address)headerLines+='<p style="font-size:.72rem;color:#666;margin-top:.15rem">'+org.address+'</p>';
+  var contactBits=[];
+  if(org.phone)contactBits.push(org.phone);
+  if(org.email)contactBits.push(org.email);
+  if(org.website)contactBits.push(org.website);
+  if(contactBits.length)headerLines+='<p style="font-size:.7rem;color:#888;margin-top:.1rem">'+contactBits.join(' • ')+'</p>';
   return `<div class="payslip-preview">
     <div class="ps-header">
-      <p style="font-size:.85rem;font-weight:700;color:#1a2540;margin-bottom:.25rem">Community Educational and Skills Training Institute and Services Limited</p>
-      <p style="font-size:1rem;font-weight:400;color:#666;letter-spacing:2px;margin-top:.15rem">C.E.S.T.I.S</p>
-      <p style="font-weight:600;margin-top:.5rem">EMPLOYEE PAY ADVICE SLIP</p>
+      <p style="font-size:.95rem;font-weight:700;color:#0f172a;margin-bottom:.2rem">${org.name||'Your Organization'}</p>
+      ${org.shortName&&org.shortName!==org.name?'<p style="font-size:.85rem;font-weight:400;color:#666;letter-spacing:1.5px;margin-top:.1rem">'+org.shortName+'</p>':''}
+      ${headerLines}
+      <p style="font-weight:700;margin-top:.6rem;letter-spacing:.06em">EMPLOYEE PAY ADVICE SLIP</p>
     </div>
     <div class="ps-info">
       <div class="row"><span class="lbl">Employee Name:</span><span class="val">${result.empName}</span></div>
@@ -2007,7 +2150,7 @@ function buildPayslipHTML(emp,result,date,ytd){
         <tr><td>Income Tax</td><td class="amt">${fmt(result.incomeTax)}</td><td class="amt">—</td><td class="amt">${fmt(ytd.incomeTax)}</td></tr>
         <tr><td>Education Tax</td><td class="amt">${fmt(result.edTaxEmp)}</td><td class="amt">${fmt(result.edTaxEr)}</td><td class="amt">${fmt(ytd.edTax)}</td></tr>
         <tr><td>NHT</td><td class="amt">${fmt(result.nhtEmp)}</td><td class="amt">${fmt(result.nhtEr)}</td><td class="amt">${fmt(ytd.nht)}</td></tr>
-        <tr><td>HEART/NSTA</td><td class="amt">—</td><td class="amt">${fmt(result.heartEr||0)}</td><td class="amt">${fmt(ytd.heartEr)}</td></tr>
+        <tr><td>Training Levy</td><td class="amt">—</td><td class="amt">${fmt(result.heartEr||0)}</td><td class="amt">${fmt(ytd.heartEr)}</td></tr>
         <tr style="font-weight:700;border-top:2px solid #1a2540"><td>Month-to-Date</td><td class="amt">${fmt(result.totalEmpDeductions)}</td><td class="amt">${fmt(result.totalErContributions)}</td><td class="amt"></td></tr>
       </tbody>
     </table>
@@ -2016,7 +2159,7 @@ function buildPayslipHTML(emp,result,date,ytd){
       <div class="box"><div class="lbl">Total Deductions</div><div class="val" style="color:#ef4444">${fmt(result.totalEmpDeductions)}</div></div>
       <div class="box" style="border-color:#10b981"><div class="lbl">Net Pay</div><div class="val" style="color:#10b981">${fmt(result.netPay)}</div></div>
     </div>
-    <div class="ps-footer">This is a computer-generated payslip. For queries, contact the Project Coordinator.</div>
+    <div class="ps-footer">This is a computer-generated payslip. For queries, contact the ${contactLine}.</div>
   </div>`;
 }
 
@@ -2181,7 +2324,7 @@ function renderSalaryRecords(){
     '<div class="stat-card blue"><div class="label">'+statsPrefix+' Gross</div><div class="value mono">'+fmt(grandTotal)+'</div><div class="sub">'+periodLabel+' \u2014 '+monthsWithData+' month(s) recorded</div></div>'+
     '<div class="stat-card green"><div class="label">'+statsPrefix+' Net Pay</div><div class="value mono">'+fmt(netTotal)+'</div><div class="sub">After all employee deductions</div></div>'+
     '<div class="stat-card red"><div class="label">Employee Deductions</div><div class="value mono">'+fmt(totalDeductions)+'</div><div class="sub">NIS + Ed Tax + NHT + Income Tax</div></div>'+
-    '<div class="stat-card gold"><div class="label">Employer Contributions</div><div class="value mono">'+fmt(erTotal)+'</div><div class="sub">NIS + Ed Tax + NHT + HEART</div></div>';
+    '<div class="stat-card gold"><div class="label">Employer Contributions</div><div class="value mono">'+fmt(erTotal)+'</div><div class="sub">NIS + Ed Tax + NHT + Training Levy</div></div>';
 
   renderSRQuarterlyTables(fyMonthly,empNames);
 }
@@ -2198,7 +2341,7 @@ function renderSRQuarterlyTables(fyMonthly,empNames){
     // Full year: aggregated quarterly summary
     document.getElementById('quarterlySummaryPanel').style.display='';
     document.getElementById('quarterlySummaryTitle').textContent='Quarterly Summary \u2014 '+getFYLabel(srFYStartYear);
-    var qhtml='<table><thead><tr><th>Quarter</th><th class="text-right">Gross Pay</th><th class="text-right">NIS (Emp)</th><th class="text-right">Ed. Tax (Emp)</th><th class="text-right">NHT (Emp)</th><th class="text-right">Income Tax</th><th class="text-right">Total Emp Ded.</th><th class="text-right">Net Pay</th><th class="text-right">NIS (Er)</th><th class="text-right">Ed. Tax (Er)</th><th class="text-right">NHT (Er)</th><th class="text-right">HEART (Er)</th><th class="text-right">Total Er Contr.</th></tr></thead><tbody>';
+    var qhtml='<table><thead><tr><th>Quarter</th><th class="text-right">Gross Pay</th><th class="text-right">NIS (Emp)</th><th class="text-right">Ed. Tax (Emp)</th><th class="text-right">NHT (Emp)</th><th class="text-right">Income Tax</th><th class="text-right">Total Emp Ded.</th><th class="text-right">Net Pay</th><th class="text-right">NIS (Er)</th><th class="text-right">Ed. Tax (Er)</th><th class="text-right">NHT (Er)</th><th class="text-right">Training Levy (Er)</th><th class="text-right">Total Er Contr.</th></tr></thead><tbody>';
     var annTotals={gross:0,nisE:0,edE:0,nhtE:0,it:0,empDed:0,net:0,nisR:0,edR:0,nhtR:0,heartR:0,erC:0};
     quarters.forEach(function(q){
       var t={gross:0,nisE:0,edE:0,nhtE:0,it:0,empDed:0,net:0,nisR:0,edR:0,nhtR:0,heartR:0,erC:0};
@@ -2277,7 +2420,7 @@ function renderSRQuarterlyTables(fyMonthly,empNames){
     var qDef=QUARTER_MONTHS[srQuarter];
     document.getElementById('quarterlySummaryPanel').style.display='';
     document.getElementById('quarterlySummaryTitle').textContent=qDef.label+' Deduction Summary \u2014 '+getFYLabel(srFYStartYear);
-    var dhtml='<table><thead><tr><th>Employee</th><th class="text-right">Gross</th><th class="text-right">NIS</th><th class="text-right">Ed. Tax</th><th class="text-right">Income Tax</th><th class="text-right">NHT</th><th class="text-right">HEART</th><th class="text-right">Total Ded.</th><th class="text-right">Net Pay</th></tr></thead><tbody>';
+    var dhtml='<table><thead><tr><th>Employee</th><th class="text-right">Gross</th><th class="text-right">NIS</th><th class="text-right">Ed. Tax</th><th class="text-right">Income Tax</th><th class="text-right">NHT</th><th class="text-right">Training Levy</th><th class="text-right">Total Ded.</th><th class="text-right">Net Pay</th></tr></thead><tbody>';
     var totals={gross:0,nis:0,ed:0,it:0,nht:0,heart:0,ded:0,net:0};
     empNames.forEach(function(name){
       var emp=DATA.employees.find(function(e){return e.name===name;});
@@ -2340,14 +2483,14 @@ function exportSalaryRecordsCSV(){
   var blob=new Blob([csv],{type:'text/csv'});
   var a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download='CESTIS_SalaryRecords_'+fileLabel+'.csv';
+  a.download=orgFilePrefix()+'_SalaryRecords_'+fileLabel+'.csv';
   a.click();URL.revokeObjectURL(a.href);
 }
 
 // ==================== TAX SUMMARY ====================
 function renderTaxSummary(){
   const runs=DATA.payrollRuns;
-  let html='<table><thead><tr><th>Pay Date</th><th class="text-right">NIS (Emp+Er)</th><th class="text-right">Income Tax</th><th class="text-right">Ed. Tax (Emp+Er)</th><th class="text-right">NHT (Emp+Er)</th><th class="text-right">HEART (Er)</th><th class="text-right">Total Emp Ded.</th><th class="text-right">Total Er Contr.</th><th class="text-right">Grand Total</th></tr></thead><tbody>';
+  let html='<table><thead><tr><th>Pay Date</th><th class="text-right">NIS (Emp+Er)</th><th class="text-right">Income Tax</th><th class="text-right">Ed. Tax (Emp+Er)</th><th class="text-right">NHT (Emp+Er)</th><th class="text-right">Training Levy (Er)</th><th class="text-right">Total Emp Ded.</th><th class="text-right">Total Er Contr.</th><th class="text-right">Grand Total</th></tr></thead><tbody>';
   if(runs.length===0)html+='<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:2rem">No payroll data</td></tr>';
   runs.forEach(r=>{
     let nis=0,it=0,ed=0,nht=0,heart=0,empD=0,erC=0;
@@ -2366,12 +2509,73 @@ function renderTaxBreakdown(){
   const idx=parseInt(document.getElementById('taxCycleSelect').value);
   if(isNaN(idx))return;
   const run=DATA.payrollRuns[idx];
-  let html='<table><thead><tr><th>Employee</th><th class="text-right">NIS (Emp)</th><th class="text-right">NIS (Er)</th><th class="text-right">Income Tax</th><th class="text-right">Ed.Tax (Emp)</th><th class="text-right">Ed.Tax (Er)</th><th class="text-right">NHT (Emp)</th><th class="text-right">NHT (Er)</th><th class="text-right">HEART (Er)</th></tr></thead><tbody>';
+  let html='<table><thead><tr><th>Employee</th><th class="text-right">NIS (Emp)</th><th class="text-right">NIS (Er)</th><th class="text-right">Income Tax</th><th class="text-right">Ed.Tax (Emp)</th><th class="text-right">Ed.Tax (Er)</th><th class="text-right">NHT (Emp)</th><th class="text-right">NHT (Er)</th><th class="text-right">Training Levy (Er)</th></tr></thead><tbody>';
   run.results.forEach(r=>{
     html+=`<tr><td>${r.empName}</td><td class="mono text-right">${fmt(r.nisEmp)}</td><td class="mono text-right">${fmt(r.nisEr)}</td><td class="mono text-right">${fmt(r.incomeTax)}</td><td class="mono text-right">${fmt(r.edTaxEmp)}</td><td class="mono text-right">${fmt(r.edTaxEr)}</td><td class="mono text-right">${fmt(r.nhtEmp)}</td><td class="mono text-right">${fmt(r.nhtEr)}</td><td class="mono text-right">${fmt(r.heartEr||0)}</td></tr>`;
   });
   html+='</tbody></table>';
   document.getElementById('taxBreakdownTable').innerHTML=html;
+}
+
+// ==================== ORGANIZATION ====================
+function orgFilePrefix(){
+  var org=DATA.organization||defaultOrganization();
+  var raw=(org.shortName||org.name||'Payroll').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+  return raw||'Payroll';
+}
+
+function applyOrgBranding(){
+  var org=DATA.organization||defaultOrganization();
+  var name=org.shortName||org.name||'Payroll System';
+  var tagline=org.tagline||'Modern payroll management';
+  var initial=(org.initial||(name.trim().charAt(0))||'P').toUpperCase();
+  var brandName=document.getElementById('brandName');
+  var brandTagline=document.getElementById('brandTagline');
+  var brandMark=document.getElementById('brandMark');
+  if(brandName)brandName.textContent=name;
+  if(brandTagline)brandTagline.textContent=tagline;
+  if(brandMark)brandMark.textContent=initial;
+  var dashSub=document.getElementById('dashSubtitle');
+  if(dashSub)dashSub.textContent=(org.name?org.name+' — overview':'Organization overview');
+  document.title=(org.name?org.name+' — Payroll':'Payroll Management System');
+}
+
+function renderOrganization(){
+  var org=DATA.organization||defaultOrganization();
+  var byId=function(id){return document.getElementById(id);};
+  byId('orgName').value=org.name||'';
+  byId('orgShortName').value=org.shortName||'';
+  byId('orgTagline').value=org.tagline||'';
+  byId('orgInitial').value=org.initial||'';
+  byId('orgAddress').value=org.address||'';
+  byId('orgPhone').value=org.phone||'';
+  byId('orgEmail').value=org.email||'';
+  byId('orgWebsite').value=org.website||'';
+  byId('orgTaxId').value=org.taxId||'';
+  byId('orgRegNo').value=org.regNo||'';
+  byId('orgPayrollContact').value=org.payrollContact||'';
+}
+
+function saveOrganization(){
+  var byId=function(id){return document.getElementById(id);};
+  var name=byId('orgName').value.trim();
+  if(!name){alert('Organization name is required');byId('orgName').focus();return;}
+  DATA.organization={
+    name:name,
+    shortName:byId('orgShortName').value.trim()||name,
+    tagline:byId('orgTagline').value.trim()||'Modern payroll management',
+    initial:(byId('orgInitial').value.trim()||name.charAt(0)).toUpperCase().slice(0,2),
+    address:byId('orgAddress').value.trim(),
+    phone:byId('orgPhone').value.trim(),
+    email:byId('orgEmail').value.trim(),
+    website:byId('orgWebsite').value.trim(),
+    taxId:byId('orgTaxId').value.trim(),
+    regNo:byId('orgRegNo').value.trim(),
+    payrollContact:byId('orgPayrollContact').value.trim()||'Payroll Coordinator'
+  };
+  markDataDirty();saveStore();
+  applyOrgBranding();
+  showNotification('Organization info saved');
 }
 
 // ==================== SETTINGS ====================
@@ -2542,7 +2746,7 @@ function exportAllData(){
   const blob=new Blob([JSON.stringify(exportObj,null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download=`CESTIS_Payroll_${new Date().toISOString().split('T')[0]}.json`;
+  a.download=`${orgFilePrefix()}_Payroll_${new Date().toISOString().split('T')[0]}.json`;
   a.click();URL.revokeObjectURL(a.href);
 }
 
@@ -3780,7 +3984,7 @@ function escapeHtml(text){
   return div.innerHTML;
 }
 
-// Storage keys — matching CESTIS-MAIN-DASHBOARD
+// Storage keys — matching dashboard
 const USERS_KEY='dashboardUsers';
 const PERMS_KEY='cestisPermissions';
 let currentUser=null;
@@ -3801,13 +4005,13 @@ let currentOTP=null;
 let otpExpiry=null;
 let pendingResetUser=null;
 
-// Default admin user — matching CESTIS-MAIN-DASHBOARD
+// Default admin user (local-only mode — used to keep role-gated UI accessible)
 const defaultUsers=[{
   id:'admin_001',
-  username:'Cestisadmin',
-  password:'cestisadmin123$',
-  displayName:'System Administrator',
-  email:'admin@cestis.com',
+  username:'admin',
+  password:'admin123',
+  displayName:'Administrator',
+  email:'admin@example.com',
   role:'Administrator',
   isAdmin:true,
   createdAt:new Date().toISOString()
@@ -3863,7 +4067,7 @@ function loadPermissions(){
 }
 function savePermissions(perms){localStorage.setItem(PERMS_KEY,JSON.stringify(perms));}
 
-// ==================== LOGIN HANDLER (CESTIS-MAIN-DASHBOARD PATTERN) ====================
+// ==================== LOGIN HANDLER (dashboard PATTERN) ====================
 async function handleLogin(event){
   if(event)event.preventDefault();
   var username=document.getElementById('username').value.trim();
@@ -3925,7 +4129,7 @@ async function handleLogin(event){
   }
 }
 
-// Cloud Auto-Sync & Retry Login (CESTIS-MAIN-DASHBOARD pattern)
+// Cloud Auto-Sync & Retry Login (dashboard pattern)
 async function autoSyncAndRetryLogin(username,password){
   var loginError=document.getElementById('loginError');
   try{
@@ -3995,7 +4199,7 @@ async function autoSyncAndRetryLogin(username,password){
   }
 }
 
-// Complete Login (CESTIS-MAIN-DASHBOARD pattern — uses sessionStorage)
+// Complete Login (dashboard pattern — uses sessionStorage)
 function completeLogin(user){
   currentUser=user;
   sessionStorage.setItem('isLoggedIn','true');
@@ -4023,7 +4227,7 @@ function completeLogin(user){
   promptSyncOnLogin();
 }
 
-// Check Auth & Session Management (CESTIS-MAIN-DASHBOARD pattern)
+// Check Auth & Session Management (dashboard pattern)
 function checkAuth(){
   var isLoggedIn=sessionStorage.getItem('isLoggedIn')==='true';
   var loginPage=document.getElementById('loginPage');
@@ -4092,7 +4296,7 @@ function showNotification(message){
   setTimeout(function(){notif.style.opacity='0';setTimeout(function(){notif.remove();},300);},3000);
 }
 
-// Mandatory Post-Login Cloud Sync (CESTIS-MAIN-DASHBOARD pattern)
+// Mandatory Post-Login Cloud Sync (dashboard pattern)
 function promptSyncOnLogin(){
   var savedToken=localStorage.getItem('schoolDashboardGoogleAccessToken');
   var savedExpiry=localStorage.getItem('schoolDashboardGoogleTokenExpiry');
@@ -4758,7 +4962,7 @@ function deleteUser(uid){
   const users=loadUsers();
   const u=users.find(x=>x.id===uid);
   if(!u)return;
-  if(u.username.toLowerCase()==='cestisadmin'){alert('Cannot delete the main administrator account');return;}
+  if(u.username.toLowerCase()==='admin'){alert('Cannot delete the main administrator account');return;}
   if(!confirm('Delete user "'+u.displayName+'"?'))return;
   saveUsers(users.filter(x=>x.id!==uid));
   renderUserManagement();
@@ -4783,7 +4987,7 @@ function renderUserManagement(){
   allUsers.forEach(function(u){
     var roleClass=isAdminRole(u.role)?'admin':u.role==='viewer'?'viewer':'user';
     var roleLabel=isAdminRole(u.role)?'Admin':u.role==='viewer'?'Viewer':'User';
-    var isMain=u.username.toLowerCase()==='cestisadmin';
+    var isMain=u.username.toLowerCase()==='admin';
     var twofaBadge=u.twoFactorEnabled?
       '<span class="twofa-status-badge enabled">🔒 On</span>':
       '<span class="twofa-status-badge disabled">Off</span>';
@@ -4836,10 +5040,15 @@ function generateTOTPSecret(){
   return secret;
 }
 
+function _orgIssuerLabel(){
+  var org=DATA&&DATA.organization?DATA.organization:null;
+  return (org&&(org.shortName||org.name))||'Payroll';
+}
+
 // Verify TOTP code
 function verifyTOTPCode(secret,code){
   try{
-    var totp=new OTPAuth.TOTP({issuer:'CESTIS Payroll',label:'User',algorithm:'SHA1',digits:6,period:30,secret:secret});
+    var totp=new OTPAuth.TOTP({issuer:_orgIssuerLabel()+' Payroll',label:'User',algorithm:'SHA1',digits:6,period:30,secret:secret});
     var delta=totp.validate({token:code,window:1});
     return delta!==null;
   }catch(e){console.error('Error verifying TOTP:',e);return false;}
@@ -4847,7 +5056,7 @@ function verifyTOTPCode(secret,code){
 
 // Generate TOTP URI for QR code
 function generateTOTPUri(secret,username){
-  var issuer='CESTIS%20Payroll';
+  var issuer=encodeURIComponent(_orgIssuerLabel()+' Payroll');
   var label=encodeURIComponent(username);
   return 'otpauth://totp/'+issuer+':'+label+'?secret='+secret+'&issuer='+issuer+'&algorithm=SHA1&digits=6&period=30';
 }
@@ -4928,7 +5137,7 @@ function copyBackupCodes(){
   var u=users.find(function(x){return x.id===currentUser.id;});
   var codes=pendingBackupCodes||(u?u.backupCodes:[])||[];
   var codesText=codes.map(function(bc,i){return(i+1)+'. '+bc.code+(bc.used?' (USED)':'');}).join('\n');
-  var fullText='CESTIS Payroll - Backup Codes for '+currentUser.username+'\nGenerated: '+new Date().toLocaleString()+'\n\n'+codesText+'\n\nKeep these codes in a safe place. Each code can only be used once.';
+  var fullText=_orgIssuerLabel()+' Payroll - Backup Codes for '+currentUser.username+'\nGenerated: '+new Date().toLocaleString()+'\n\n'+codesText+'\n\nKeep these codes in a safe place. Each code can only be used once.';
   navigator.clipboard.writeText(fullText).then(function(){alert('Backup codes copied to clipboard!');}).catch(function(){alert('Failed to copy. Please manually select and copy the codes.');});
 }
 
@@ -5438,11 +5647,14 @@ document.addEventListener('DOMContentLoaded',function(){
     // Local-only mode: no login, no cloud sync. Use the default admin so
     // role-gated UI (employee add/edit/delete) stays accessible.
     users=loadUsers();
-    if(!users.some(function(u){return u.username.toLowerCase()==='cestisadmin';})){
+    if(!users.some(function(u){return u.username.toLowerCase()==='admin';})){
       users.push(getDefaultUsers()[0]);
       saveUsers(users);
     }
-    currentUser=users.find(function(u){return u.username.toLowerCase()==='cestisadmin';})||users[0];
+    currentUser=users.find(function(u){return u.username.toLowerCase()==='admin';})||users[0];
+
+    // Apply organization branding to sidebar/title
+    applyOrgBranding();
 
     // Render the dashboard immediately
     renderDashboard();
