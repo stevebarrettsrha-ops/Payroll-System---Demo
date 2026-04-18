@@ -621,7 +621,6 @@ tbody tr:hover td{background:var(--primary-glow)}
         <div class="panel-head"><h3>Data Management</h3></div>
         <div class="panel-body">
           <div class="btn-group">
-            <button class="btn btn-primary" onclick="loadPresetData()">📦 Load Preset Employee Data</button>
             <button class="btn btn-ghost" onclick="exportAllData()">📥 Export JSON Backup</button>
             <button class="btn btn-ghost" onclick="document.getElementById('importFile').click()">📤 Import JSON Backup</button>
             <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
@@ -771,8 +770,8 @@ tbody tr:hover td{background:var(--primary-glow)}
 // ==================== DATA STORE ====================
 const STORAGE_KEY = 'payrollData';
 const BACKUP_STORAGE_KEY = 'payrollData_backup';
+const DEMO_VERSION = 2;
 
-let DATA = loadStore();
 let _dataDirty = false;
 let _autoSaveInterval = null;
 let _lastSaveHash = '';
@@ -803,19 +802,80 @@ function demoEmployees(){
   ];
 }
 
-function defaultData(){
+function _defaultSettings(){
   return {
-    settings:{
-      nisEmp:3,nisEr:3,edTaxEmp:2.25,edTaxEr:3.5,nhtEmp:2,nhtEr:3,
-      incomeTax:25,incomeTaxHigher:30,higherBracketAnnual:6000000,
-      annualThreshold:1799376,
-      nisCeilingMonthly:416667,
-      heartEr:3
-    },
+    nisEmp:3,nisEr:3,edTaxEmp:2.25,edTaxEr:3.5,nhtEmp:2,nhtEr:3,
+    incomeTax:25,incomeTaxHigher:30,higherBracketAnnual:6000000,
+    annualThreshold:1799376,
+    nisCeilingMonthly:416667,
+    heartEr:3
+  };
+}
+
+// Mirror calculatePayroll() so demo runs match the live engine
+function _computePayrollResult(emp,gross,s){
+  var nisCeiling=s.nisCeilingMonthly||416667;
+  var monthlyThreshold=s.annualThreshold/12;
+  var monthlyHigherBracket=(s.higherBracketAnnual||6000000)/12;
+  var nisableGross=Math.min(gross,nisCeiling);
+  var nisEmp=nisableGross*(s.nisEmp/100);
+  var nisEr=nisableGross*(s.nisEr/100);
+  var nhtEmp=gross*(s.nhtEmp/100);
+  var nhtEr=gross*(s.nhtEr/100);
+  var statutoryIncome=gross-nisEmp;
+  var edTaxEmp=statutoryIncome*(s.edTaxEmp/100);
+  var edTaxEr=statutoryIncome*(s.edTaxEr/100);
+  var heartEr=gross*((s.heartEr||3)/100);
+  var chargeableIncome=gross-nisEmp-nhtEmp;
+  var incomeTax=0;
+  if(chargeableIncome>monthlyThreshold){
+    var taxable=chargeableIncome-monthlyThreshold;
+    var standardBand=monthlyHigherBracket-monthlyThreshold;
+    if(taxable<=standardBand)incomeTax=taxable*(s.incomeTax/100);
+    else incomeTax=standardBand*(s.incomeTax/100)+(taxable-standardBand)*((s.incomeTaxHigher||30)/100);
+  }
+  var totalEmpDeductions=nisEmp+edTaxEmp+nhtEmp+incomeTax;
+  var totalErContributions=nisEr+edTaxEr+nhtEr+heartEr;
+  return {
+    empName:emp.name,empType:emp.type,designation:emp.designation,trn:emp.trn,nis:emp.nis,
+    gross:gross,nisEmp:nisEmp,nisEr:nisEr,edTaxEmp:edTaxEmp,edTaxEr:edTaxEr,
+    nhtEmp:nhtEmp,nhtEr:nhtEr,heartEr:heartEr,incomeTax:incomeTax,
+    totalEmpDeductions:totalEmpDeductions,totalErContributions:totalErContributions,
+    netPay:gross-totalEmpDeductions
+  };
+}
+
+// Build six recent monthly payroll runs so every page has data to show
+function demoPayrollRuns(employees,settings){
+  var runs=[];
+  var today=new Date();
+  for(var i=5;i>=0;i--){
+    var first=new Date(today.getFullYear(),today.getMonth()-i,1);
+    var last=new Date(first.getFullYear(),first.getMonth()+1,0);
+    var dateStr=last.getFullYear()+'-'+String(last.getMonth()+1).padStart(2,'0')+'-'+String(last.getDate()).padStart(2,'0');
+    var results=employees.map(function(e){
+      // Slight month-over-month variation (overtime, bonuses, etc.)
+      var variation=1+((i%3)-1)*0.04;
+      var base=e.salary>0?e.salary:75000;
+      // Part-time staff bill ~70% of nominal in a typical month
+      var gross=Math.round((e.type==='PT'?base*0.7:base)*variation*100)/100;
+      return _computePayrollResult(e,gross,settings);
+    });
+    runs.push({date:dateStr,results:results});
+  }
+  return runs;
+}
+
+function defaultData(){
+  var settings=_defaultSettings();
+  var emps=demoEmployees();
+  return {
+    settings:settings,
     organization:defaultOrganization(),
-    employees:demoEmployees(),
-    payrollRuns:[],
-    isDemo:true
+    employees:emps,
+    payrollRuns:demoPayrollRuns(emps,settings),
+    isDemo:true,
+    demoVersion:DEMO_VERSION
   };
 }
 
@@ -826,6 +886,7 @@ function clearAllData(){
   DATA.employees=[];
   DATA.payrollRuns=[];
   DATA.isDemo=false;
+  DATA.demoVersion=DEMO_VERSION;
   markDataDirty();saveStore();
   showNotification('All data cleared — start adding your own employees!');
   if(typeof refreshActiveSections==='function')refreshActiveSections();
@@ -835,15 +896,31 @@ function clearAllData(){
 function loadStore(){
   try{
     var d=localStorage.getItem(STORAGE_KEY);
-    var parsed=d?JSON.parse(d):defaultData();
+    if(!d)return defaultData();
+    var parsed=JSON.parse(d);
     if(!parsed.organization)parsed.organization=defaultOrganization();
     else{
       var defaults=defaultOrganization();
       Object.keys(defaults).forEach(function(k){if(parsed.organization[k]===undefined)parsed.organization[k]=defaults[k];});
     }
+    if(!Array.isArray(parsed.employees))parsed.employees=[];
+    if(!Array.isArray(parsed.payrollRuns))parsed.payrollRuns=[];
+    // Refresh demo content for anyone who hasn't explicitly cleared it.
+    // isDemo===false means the user clicked "Clear & Start Fresh" — leave them alone.
+    var storedVersion=parsed.demoVersion||0;
+    if(parsed.isDemo!==false&&storedVersion<DEMO_VERSION){
+      var demo=defaultData();
+      parsed.employees=demo.employees;
+      parsed.payrollRuns=demo.payrollRuns;
+      parsed.organization=demo.organization;
+      parsed.isDemo=true;
+      parsed.demoVersion=DEMO_VERSION;
+    }
     return parsed;
   }catch(e){return defaultData();}
 }
+
+let DATA = loadStore();
 
 // Create a simple hash of data to detect changes
 function _dataHash(data){
@@ -1085,7 +1162,7 @@ function renderDashboard(){
   emps.forEach((e,i)=>{
     empHtml+=`<tr><td>${i+1}</td><td>${e.name}</td><td>${e.designation}</td><td><span class="tag ${e.type==='FT'?'tag-ft':'tag-pt'}">${e.type}</span></td><td class="mono">${e.trn||'—'}</td><td class="mono">${e.nis||'—'}</td></tr>`;
   });
-  if(emps.length===0)empHtml+='<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem">No employees. Add some from Settings → Load Preset Data</td></tr>';
+  if(emps.length===0)empHtml+='<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem">No employees yet. Add your first from the Employees page.</td></tr>';
   empHtml+='</tbody></table>';
   document.getElementById('dashEmployees').innerHTML=empHtml;
 }
@@ -2284,27 +2361,6 @@ async function fetchCurrentRates(){
 
   btn.disabled = false;
   btn.textContent = '🌐 Fetch Current Rates';
-}
-
-// ==================== PRESET DATA ====================
-function loadPresetData(){
-  if(DATA.employees.length>0&&!confirm('This will replace existing employees. Continue?'))return;
-  DATA.employees=[
-    {name:'Steve Barrett',designation:'Co-ordinator',type:'FT',mobile:'876-365-2325',dob:'1996-11-03',trn:'127-009-850',nis:'C-96-05-01',startDate:'2021-03-01',salary:37145},
-    {name:'Rashaun Barrett',designation:'Administrative Assistant/ Assistant Coordinator',type:'FT',mobile:'876-530-9149',dob:'1998-10-05',trn:'127-009-817',nis:'C-98-03-73',startDate:'2022-10-01',salary:78000},
-    {name:'Rohan Hamilton',designation:'Welding Instructor',type:'FT',mobile:'876-783-8616',dob:'1974-07-26',trn:'105-249-262',nis:'C-74-05-80',startDate:'2018-08-05',salary:95943.09},
-    {name:'Richard Smith',designation:'Electrical Installation Instructor (BNV)',type:'FT',mobile:'876-986-3698',dob:'1971-03-07',trn:'102-183-511',nis:'C-71-08-24',startDate:'2020-04-01',salary:91374.37},
-    {name:'Tracy-Ann Johnson',designation:'Cosmetology/Beauty Therapy Instructor',type:'FT',mobile:'876-879-6059',dob:'1986-01-16',trn:'115-862-331',nis:'C-86-39-20',startDate:'2019-04-01',salary:86190.64},
-    {name:'Kevin Allen',designation:'Welding Instructor (BNV)',type:'FT',mobile:'876-536-5733',dob:'1964-04-08',trn:'100-861-229',nis:'M-64-10-13',startDate:'2020-04-01',salary:91374.37},
-    {name:'Seyoum Blackwood',designation:'Electrical Installation Instructor',type:'FT',mobile:'876-853-7632',dob:'1998-06-01',trn:'127-288-945',nis:'C-98-07-79',startDate:'2022-03-01',salary:91374.37},
-    {name:'Pamella Archer',designation:'Entrepreneurship Instructor (PT)',type:'PT',mobile:'876-454-8458',dob:'1971-09-07',trn:'102-062-072',nis:'C-71-80-34',startDate:'2021-08-05',salary:0},
-    {name:'Fontanette Whittingham',designation:'Information Technology Instructor (PT)',type:'PT',mobile:'876-869-5329',dob:'1986-04-16',trn:'116-017-996',nis:'C-86-32-25',startDate:'2020-08-01',salary:0},
-    {name:'Yves Bergeron',designation:'Personal Development Instructor (PT)',type:'PT',mobile:'876-319-8904',dob:'1963-11-17',trn:'112-579-477',nis:'N-63-15-58',startDate:'2020-08-01',salary:0},
-    {name:'Glowmayne Rowe',designation:'Mathematics Instructor (PT)',type:'PT',mobile:'',dob:'',trn:'126-305-307',nis:'M-96-08-58',startDate:'',salary:0}
-  ];
-  markDataDirty();saveStore();
-  alert('Preset employee data loaded!');
-  showPage('employees');
 }
 
 // ==================== IMPORT/EXPORT ====================
