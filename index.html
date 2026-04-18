@@ -504,8 +504,8 @@ tr:hover td{background:rgba(59,130,246,.04)}
 </head>
 <body>
 
-<!-- ===== LOGIN PAGE ===== -->
-<div class="login-screen" id="loginPage">
+<!-- ===== LOGIN PAGE (DISABLED — local-only mode) ===== -->
+<div class="login-screen" id="loginPage" style="display:none">
   <div class="login-wrapper">
     <div class="login-card" style="position:relative">
       <div class="login-syncing-overlay" id="loginSyncOverlay">
@@ -655,7 +655,7 @@ tr:hover td{background:rgba(59,130,246,.04)}
   </div>
 </div>
 
-<div class="app" id="dashboardContainer" style="display:none">
+<div class="app" id="dashboardContainer">
   <!-- Sidebar -->
   <aside class="sidebar">
     <!-- Top row: Brand + User + Cloud status -->
@@ -664,64 +664,19 @@ tr:hover td{background:rgba(59,130,246,.04)}
         <h1>C.E.S.T.I.S</h1>
         <p>Payroll System</p>
       </div>
-      <!-- Logged-in user badge -->
-      <div class="sidebar-user" id="sidebarUser" style="display:none">
-        <div class="user-avatar" id="sidebarAvatar">A</div>
-        <div class="user-details nav-text">
-          <div class="user-name" id="sidebarUserName">Admin</div>
-          <div class="user-role" id="sidebarUserRole">admin</div>
-        </div>
-        <button class="logout-btn" onclick="handleLogout()" title="Sign Out">🚪</button>
-      </div>
-      <div class="sidebar-top-right">
-        <div class="sidebar-footer">
-          <!-- Cloud Sync: Not Connected -->
-          <div id="cloudNotConnected">
-            <button class="cloud-sync-btn" onclick="connectToGoogleDrive()" style="padding:.3rem .6rem;font-size:.75rem">
-              <span>☁️</span>
-              <span class="nav-text">Not connected</span>
-            </button>
-          </div>
-          <!-- Cloud Sync: Connected -->
-          <div id="cloudConnected" style="display:none;">
-            <div class="cloud-status-row" style="margin-bottom:0">
-              <span id="cloudConnectedDot" class="cloud-status-dot connected"></span>
-              <span class="cloud-status-label connected nav-text" id="cloudConnectedText">Connected</span>
-            </div>
-            <div class="cloud-dropdown">
-              <button class="cloud-sync-btn" onclick="toggleCloudMenu()" style="padding:.3rem .6rem;font-size:.75rem">
-                <span id="cloudMenuIcon">☁️</span>
-                <span class="nav-text">Cloud</span>
-                <span class="btn-arrow nav-text">▼</span>
-              </button>
-              <div class="cloud-dropdown-content" id="cloudDropdownMenu">
-                <div class="cloud-dropdown-item save-cloud" onclick="saveToCloud()">
-                  <span>💾</span><span>Save to Cloud</span>
-                </div>
-                <div class="cloud-dropdown-item sync-cloud" onclick="syncFromCloud()">
-                  <span>🔄</span><span>Sync from Cloud</span>
-                </div>
-                <div class="cloud-dropdown-item merge-cloud" onclick="mergeFromCloud()">
-                  <span>🔀</span><span>Merge from Cloud</span>
-                </div>
-                <div class="cloud-dropdown-divider"></div>
-                <div class="cloud-dropdown-item browse-cloud" onclick="browseCloudFolder()">
-                  <span>📂</span><span>Browse All Backups</span>
-                </div>
-                <div class="cloud-dropdown-divider"></div>
-                <div class="last-sync-info" id="lastSyncInfo">Last sync: Never</div>
-                <div class="last-sync-info" id="lastSavedByInfo">Last saved by: --</div>
-                <div class="last-sync-info" id="backupFileNameInfo" style="word-break:break-all;">
-                  Backup file: <span id="backupFileNameText">--</span>
-                </div>
-                <div class="cloud-dropdown-divider"></div>
-                <div class="cloud-dropdown-item danger" onclick="disconnectFromGoogleDrive()">
-                  <span>🔌</span><span>Disconnect</span>
-                </div>
-              </div>
-            </div>
-            <div class="cloud-sync-meta nav-text" id="sidebarSyncInfo" style="display:none">Last sync: Never</div>
-          </div>
+      <!-- Logged-in user badge & cloud sync removed — local-only mode -->
+      <div class="sidebar-user" id="sidebarUser" style="display:none"></div>
+      <div class="sidebar-top-right" style="display:none">
+        <div id="cloudNotConnected" style="display:none"></div>
+        <div id="cloudConnected" style="display:none">
+          <span id="cloudConnectedDot"></span>
+          <span id="cloudConnectedText"></span>
+          <span id="cloudMenuIcon"></span>
+          <div id="cloudDropdownMenu"></div>
+          <div id="lastSyncInfo"></div>
+          <div id="lastSavedByInfo"></div>
+          <div id="backupFileNameInfo"><span id="backupFileNameText"></span></div>
+          <div id="sidebarSyncInfo"></div>
         </div>
       </div>
     </div>
@@ -1255,15 +1210,8 @@ function _autoSaveTick(){
   }catch(e){console.warn('[AutoSave] Error:',e.message);}
 }
 
-// Auto cloud save: push to cloud if connected and data changed since last cloud sync
-function _autoCloudSaveTick(){
-  if(typeof isCloudConnected!=='undefined'&&isCloudConnected&&typeof googleAccessToken!=='undefined'&&googleAccessToken){
-    if(typeof autoSaveUsersToCloud==='function'){
-      console.log('[AutoCloudSave] Pushing data to cloud');
-      autoSaveUsersToCloud();
-    }
-  }
-}
+// Auto cloud save: disabled in local-only mode
+function _autoCloudSaveTick(){/* cloud sync removed */}
 
 // Visual indicator for autosave
 function _showAutoSaveIndicator(){
@@ -5484,65 +5432,21 @@ function renderPermissions(){
   updatePermBadge();
 }
 
-// ==================== INIT ====================
+// ==================== INIT (LOCAL-ONLY MODE) ====================
 document.addEventListener('DOMContentLoaded',function(){
-    // Ensure users are always persisted to localStorage
+    // Local-only mode: no login, no cloud sync. Use the default admin so
+    // role-gated UI (employee add/edit/delete) stays accessible.
     users=loadUsers();
-    var needsSave=!localStorage.getItem(USERS_KEY);
-    // Ensure default admin always exists (case-insensitive check)
     if(!users.some(function(u){return u.username.toLowerCase()==='cestisadmin';})){
       users.push(getDefaultUsers()[0]);
-      needsSave=true;
+      saveUsers(users);
     }
-    if(needsSave)saveUsers(users);
+    currentUser=users.find(function(u){return u.username.toLowerCase()==='cestisadmin';})||users[0];
 
-    // Check for existing session (CESTIS-MAIN-DASHBOARD uses sessionStorage)
-    if(checkSession()){
-      checkAuth();
-    }else{
-      // On login screen: auto-sync credentials from cloud if token is available
-      autoSyncCredentialsOnLoad();
-    }
+    // Render the dashboard immediately
+    renderDashboard();
 
-    initializeCloudSync();
-    setTimeout(function(){ initGoogleAuth(); }, 500);
-
-    // 2FA input event listeners — restrict to numeric and handle Enter key
-    ['login2FACode','twofaSetupCode','twofaDisableCode','otpCode'].forEach(function(inputId){
-      var input=document.getElementById(inputId);
-      if(input){
-        input.addEventListener('input',function(){this.value=this.value.replace(/[^0-9]/g,'');});
-        input.addEventListener('keypress',function(e){
-          if(e.key==='Enter'){
-            e.preventDefault();
-            if(inputId==='login2FACode')verify2FALogin();
-            else if(inputId==='twofaSetupCode')confirmTwoFASetup();
-            else if(inputId==='twofaDisableCode')confirmTwoFADisable();
-            else if(inputId==='otpCode')verifyOTP();
-          }
-        });
-      }
-    });
-    // Backup code input — allow alphanumeric, convert to uppercase
-    var backupCodeInput=document.getElementById('loginBackupCode');
-    if(backupCodeInput){
-      backupCodeInput.addEventListener('input',function(){this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'');});
-      backupCodeInput.addEventListener('keypress',function(e){if(e.key==='Enter'){e.preventDefault();verifyBackupCodeLogin();}});
-    }
-    // Escape key to close 2FA modals
-    document.addEventListener('keydown',function(e){
-      if(e.key==='Escape'){
-        closeTwoFASetup();closeBackupCodesModal();closeTwoFADisable();
-      }
-    });
-
-    // After init, check cloud status and notify if disconnected
-    setTimeout(function(){
-      checkCloudAndNotify('page_load');
-      startCloudMonitor();
-    }, 2000);
-
-    // Start autosave: local every 15s, cloud every 60s
+    // Local autosave (15s); cloud autosave is disabled in local-only mode
     startAutoSave();
 });
 </script>
