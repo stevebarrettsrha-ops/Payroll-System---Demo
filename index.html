@@ -770,8 +770,8 @@ tbody tr:hover td{background:var(--primary-glow)}
 // ==================== DATA STORE ====================
 const STORAGE_KEY = 'payrollData';
 const BACKUP_STORAGE_KEY = 'payrollData_backup';
+const DEMO_VERSION = 2;
 
-let DATA = loadStore();
 let _dataDirty = false;
 let _autoSaveInterval = null;
 let _lastSaveHash = '';
@@ -802,19 +802,80 @@ function demoEmployees(){
   ];
 }
 
-function defaultData(){
+function _defaultSettings(){
   return {
-    settings:{
-      nisEmp:3,nisEr:3,edTaxEmp:2.25,edTaxEr:3.5,nhtEmp:2,nhtEr:3,
-      incomeTax:25,incomeTaxHigher:30,higherBracketAnnual:6000000,
-      annualThreshold:1799376,
-      nisCeilingMonthly:416667,
-      heartEr:3
-    },
+    nisEmp:3,nisEr:3,edTaxEmp:2.25,edTaxEr:3.5,nhtEmp:2,nhtEr:3,
+    incomeTax:25,incomeTaxHigher:30,higherBracketAnnual:6000000,
+    annualThreshold:1799376,
+    nisCeilingMonthly:416667,
+    heartEr:3
+  };
+}
+
+// Mirror calculatePayroll() so demo runs match the live engine
+function _computePayrollResult(emp,gross,s){
+  var nisCeiling=s.nisCeilingMonthly||416667;
+  var monthlyThreshold=s.annualThreshold/12;
+  var monthlyHigherBracket=(s.higherBracketAnnual||6000000)/12;
+  var nisableGross=Math.min(gross,nisCeiling);
+  var nisEmp=nisableGross*(s.nisEmp/100);
+  var nisEr=nisableGross*(s.nisEr/100);
+  var nhtEmp=gross*(s.nhtEmp/100);
+  var nhtEr=gross*(s.nhtEr/100);
+  var statutoryIncome=gross-nisEmp;
+  var edTaxEmp=statutoryIncome*(s.edTaxEmp/100);
+  var edTaxEr=statutoryIncome*(s.edTaxEr/100);
+  var heartEr=gross*((s.heartEr||3)/100);
+  var chargeableIncome=gross-nisEmp-nhtEmp;
+  var incomeTax=0;
+  if(chargeableIncome>monthlyThreshold){
+    var taxable=chargeableIncome-monthlyThreshold;
+    var standardBand=monthlyHigherBracket-monthlyThreshold;
+    if(taxable<=standardBand)incomeTax=taxable*(s.incomeTax/100);
+    else incomeTax=standardBand*(s.incomeTax/100)+(taxable-standardBand)*((s.incomeTaxHigher||30)/100);
+  }
+  var totalEmpDeductions=nisEmp+edTaxEmp+nhtEmp+incomeTax;
+  var totalErContributions=nisEr+edTaxEr+nhtEr+heartEr;
+  return {
+    empName:emp.name,empType:emp.type,designation:emp.designation,trn:emp.trn,nis:emp.nis,
+    gross:gross,nisEmp:nisEmp,nisEr:nisEr,edTaxEmp:edTaxEmp,edTaxEr:edTaxEr,
+    nhtEmp:nhtEmp,nhtEr:nhtEr,heartEr:heartEr,incomeTax:incomeTax,
+    totalEmpDeductions:totalEmpDeductions,totalErContributions:totalErContributions,
+    netPay:gross-totalEmpDeductions
+  };
+}
+
+// Build six recent monthly payroll runs so every page has data to show
+function demoPayrollRuns(employees,settings){
+  var runs=[];
+  var today=new Date();
+  for(var i=5;i>=0;i--){
+    var first=new Date(today.getFullYear(),today.getMonth()-i,1);
+    var last=new Date(first.getFullYear(),first.getMonth()+1,0);
+    var dateStr=last.getFullYear()+'-'+String(last.getMonth()+1).padStart(2,'0')+'-'+String(last.getDate()).padStart(2,'0');
+    var results=employees.map(function(e){
+      // Slight month-over-month variation (overtime, bonuses, etc.)
+      var variation=1+((i%3)-1)*0.04;
+      var base=e.salary>0?e.salary:75000;
+      // Part-time staff bill ~70% of nominal in a typical month
+      var gross=Math.round((e.type==='PT'?base*0.7:base)*variation*100)/100;
+      return _computePayrollResult(e,gross,settings);
+    });
+    runs.push({date:dateStr,results:results});
+  }
+  return runs;
+}
+
+function defaultData(){
+  var settings=_defaultSettings();
+  var emps=demoEmployees();
+  return {
+    settings:settings,
     organization:defaultOrganization(),
-    employees:demoEmployees(),
-    payrollRuns:[],
-    isDemo:true
+    employees:emps,
+    payrollRuns:demoPayrollRuns(emps,settings),
+    isDemo:true,
+    demoVersion:DEMO_VERSION
   };
 }
 
@@ -825,6 +886,7 @@ function clearAllData(){
   DATA.employees=[];
   DATA.payrollRuns=[];
   DATA.isDemo=false;
+  DATA.demoVersion=DEMO_VERSION;
   markDataDirty();saveStore();
   showNotification('All data cleared — start adding your own employees!');
   if(typeof refreshActiveSections==='function')refreshActiveSections();
@@ -843,17 +905,22 @@ function loadStore(){
     }
     if(!Array.isArray(parsed.employees))parsed.employees=[];
     if(!Array.isArray(parsed.payrollRuns))parsed.payrollRuns=[];
-    // If the stored data is empty and the user has never explicitly cleared it,
-    // seed the demo content so first-time visitors can explore the app.
-    if(parsed.employees.length===0&&parsed.payrollRuns.length===0&&parsed.isDemo===undefined){
+    // Refresh demo content for anyone who hasn't explicitly cleared it.
+    // isDemo===false means the user clicked "Clear & Start Fresh" — leave them alone.
+    var storedVersion=parsed.demoVersion||0;
+    if(parsed.isDemo!==false&&storedVersion<DEMO_VERSION){
       var demo=defaultData();
       parsed.employees=demo.employees;
+      parsed.payrollRuns=demo.payrollRuns;
       parsed.organization=demo.organization;
       parsed.isDemo=true;
+      parsed.demoVersion=DEMO_VERSION;
     }
     return parsed;
   }catch(e){return defaultData();}
 }
+
+let DATA = loadStore();
 
 // Create a simple hash of data to detect changes
 function _dataHash(data){
