@@ -621,10 +621,12 @@ tbody tr:hover td{background:var(--primary-glow)}
         <div class="panel-head"><h3>Data Management</h3></div>
         <div class="panel-body">
           <div class="btn-group">
+            <button class="btn btn-primary" onclick="loadDemoData()">📦 Load Sample Demo Data</button>
             <button class="btn btn-ghost" onclick="exportAllData()">📥 Export JSON Backup</button>
             <button class="btn btn-ghost" onclick="document.getElementById('importFile').click()">📤 Import JSON Backup</button>
             <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
           </div>
+          <p style="font-size:.78rem;color:var(--text-muted);margin-top:.6rem">"Load Sample Demo Data" populates 5 demo employees and 6 months of payroll runs so you can preview every page. Use "Clear Employees &amp; Payroll" above to start with a blank slate.</p>
         </div>
       </div>
     </div>
@@ -893,6 +895,24 @@ function clearAllData(){
   showPage('employees');
 }
 
+// Force-load (or reload) the sample demo content. Always overwrites
+// employees, payroll runs, and organization branding.
+function loadDemoData(){
+  if((DATA.employees.length>0||DATA.payrollRuns.length>0)&&
+     !confirm('Replace current employees and payroll history with the sample demo data?\n\nYour current entries will be overwritten.'))return;
+  var demo=defaultData();
+  DATA.employees=demo.employees;
+  DATA.payrollRuns=demo.payrollRuns;
+  DATA.organization=demo.organization;
+  DATA.isDemo=true;
+  DATA.demoVersion=DEMO_VERSION;
+  markDataDirty();saveStore();
+  applyOrgBranding();
+  showNotification('Sample data loaded — explore every page!');
+  if(typeof refreshActiveSections==='function')refreshActiveSections();
+  showPage('dashboard');
+}
+
 function loadStore(){
   try{
     var d=localStorage.getItem(STORAGE_KEY);
@@ -1128,10 +1148,24 @@ function refreshAllData(){
 
 // ==================== DASHBOARD ====================
 function renderDashboard(){
-  const banner=document.getElementById('demoBanner');
-  if(banner)banner.style.display=DATA.isDemo?'flex':'none';
   const emps=DATA.employees;
   const runs=DATA.payrollRuns;
+  const banner=document.getElementById('demoBanner');
+  if(banner){
+    if(emps.length===0&&runs.length===0){
+      banner.innerHTML='<div class="demo-banner-text"><strong>📦 No data yet.</strong>Load the sample employees and 6 months of payroll history to explore every page, or jump straight to adding your own staff.</div>'
+        +'<div class="demo-banner-actions"><button class="btn btn-primary" onclick="loadDemoData()">📦 Load Sample Data</button>'
+        +'<button class="btn btn-ghost" onclick="openEmployeeModal()">+ Add Your First Employee</button></div>';
+      banner.style.display='flex';
+    }else if(DATA.isDemo){
+      banner.innerHTML='<div class="demo-banner-text"><strong>👋 You\u2019re viewing sample data.</strong>Explore the dashboard, employees, and payroll features. When you\u2019re ready, clear the demo to start with your own data.</div>'
+        +'<div class="demo-banner-actions"><button class="btn btn-primary" onclick="showPage(\'organization\')">Set Up Organization</button>'
+        +'<button class="btn btn-danger" onclick="clearAllData()">🗑 Clear &amp; Start Fresh</button></div>';
+      banner.style.display='flex';
+    }else{
+      banner.style.display='none';
+    }
+  }
   const ftCount=emps.filter(e=>e.type==='FT').length;
   const ptCount=emps.filter(e=>e.type==='PT').length;
   const lastRun=runs.length>0?runs[runs.length-1]:null;
