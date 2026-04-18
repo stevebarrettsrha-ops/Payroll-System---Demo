@@ -287,6 +287,12 @@ tbody tr:hover td{background:var(--primary-glow)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 .spinning{display:inline-block;animation:spin 1s linear infinite}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* Demo banner */
+.demo-banner{display:flex;justify-content:space-between;align-items:center;gap:1.25rem;flex-wrap:wrap;padding:1rem 1.25rem;margin-bottom:1.5rem;border-radius:14px;background:linear-gradient(135deg,rgba(79,70,229,.08),rgba(245,158,11,.08));border:1px solid rgba(79,70,229,.18);box-shadow:var(--shadow-sm)}
+.demo-banner-text{font-size:.88rem;color:var(--text);line-height:1.5;max-width:640px}
+.demo-banner-text strong{color:var(--primary);font-weight:700;margin-right:.35rem}
+.demo-banner-actions{display:flex;gap:.6rem;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -327,9 +333,19 @@ tbody tr:hover td{background:var(--primary-glow)}
       <div class="page-header">
         <div><h2>Payroll Dashboard</h2><div class="subtitle" id="dashSubtitle">Organization overview</div></div>
         <div class="btn-group">
-          <button class="btn btn-ghost" id="globalRefreshBtn" onclick="refreshAllData()" title="Refresh &amp; sync all data">🔄 Refresh</button>
+          <button class="btn btn-ghost" id="globalRefreshBtn" onclick="refreshAllData()" title="Refresh data">🔄 Refresh</button>
           <button class="btn btn-ghost" onclick="exportAllData()">📥 Export Data</button>
           <button class="btn btn-primary" onclick="showPage('payroll')">▶ Run Payroll</button>
+        </div>
+      </div>
+      <div id="demoBanner" class="demo-banner" style="display:none">
+        <div class="demo-banner-text">
+          <strong>👋 You're viewing sample data.</strong>
+          Explore the dashboard, employees, and payroll features. When you're ready, clear the demo to start with your own data.
+        </div>
+        <div class="demo-banner-actions">
+          <button class="btn btn-primary" onclick="showPage('organization')">Set Up Organization</button>
+          <button class="btn btn-danger" onclick="clearAllData()">🗑 Clear &amp; Start Fresh</button>
         </div>
       </div>
       <div class="stats-row" id="dashStats"></div>
@@ -597,7 +613,7 @@ tbody tr:hover td{background:var(--primary-glow)}
           </div>
           <div style="margin-top:1.25rem;display:flex;gap:.75rem">
             <button class="btn btn-success" onclick="saveSettings()">💾 Save Settings</button>
-            <button class="btn btn-danger" onclick="if(confirm('Reset ALL data?')){localStorage.clear();location.reload()}">🗑 Reset All Data</button>
+            <button class="btn btn-danger" onclick="clearAllData()">🗑 Clear Employees &amp; Payroll</button>
           </div>
         </div>
       </div>
@@ -756,20 +772,6 @@ tbody tr:hover td{background:var(--primary-glow)}
 const STORAGE_KEY = 'payrollData';
 const BACKUP_STORAGE_KEY = 'payrollData_backup';
 
-// One-time migration from legacy storage keys (silent if absent)
-(function migrateStorageKeys(){
-  try{
-    if(!localStorage.getItem(STORAGE_KEY)){
-      var legacy=localStorage.getItem('cestisPayroll');
-      if(legacy)localStorage.setItem(STORAGE_KEY,legacy);
-    }
-    if(!localStorage.getItem(BACKUP_STORAGE_KEY)){
-      var legacyBackup=localStorage.getItem('cestisPayroll_backup');
-      if(legacyBackup)localStorage.setItem(BACKUP_STORAGE_KEY,legacyBackup);
-    }
-  }catch(e){}
-})();
-
 let DATA = loadStore();
 let _dataDirty = false;
 let _autoSaveInterval = null;
@@ -777,18 +779,28 @@ let _lastSaveHash = '';
 
 function defaultOrganization(){
   return {
-    name:'Your Organization',
-    shortName:'Org',
-    tagline:'Modern payroll management',
-    initial:'O',
-    address:'',
-    phone:'',
-    email:'',
-    website:'',
-    taxId:'',
-    regNo:'',
+    name:'Acme Holdings Ltd. (Demo)',
+    shortName:'Acme',
+    tagline:'Sample organization — replace with your own',
+    initial:'A',
+    address:'123 Main Street, Kingston, Jamaica',
+    phone:'+1 876-555-0100',
+    email:'payroll@acme-demo.com',
+    website:'https://acme-demo.com',
+    taxId:'000-000-000',
+    regNo:'REG-0000-DEMO',
     payrollContact:'Payroll Coordinator'
   };
+}
+
+function demoEmployees(){
+  return [
+    {name:'Aisha Bennett',designation:'Operations Manager',type:'FT',mobile:'876-555-0101',dob:'1985-04-12',trn:'123-456-789',nis:'A123456',startDate:'2022-01-15',salary:450000},
+    {name:'Marcus Reid',designation:'Software Engineer',type:'FT',mobile:'876-555-0142',dob:'1992-09-28',trn:'234-567-890',nis:'B234567',startDate:'2023-03-01',salary:320000},
+    {name:'Priya Patel',designation:'Accounts Officer',type:'FT',mobile:'876-555-0173',dob:'1990-11-04',trn:'345-678-901',nis:'C345678',startDate:'2021-09-10',salary:280000},
+    {name:'Tariq Johnson',designation:'Sales Associate',type:'PT',mobile:'876-555-0185',dob:'1998-02-19',trn:'456-789-012',nis:'D456789',startDate:'2024-06-01',salary:120000},
+    {name:'Lina Chen',designation:'HR Coordinator',type:'FT',mobile:'876-555-0196',dob:'1988-07-23',trn:'567-890-123',nis:'E567890',startDate:'2022-08-15',salary:295000}
+  ];
 }
 
 function defaultData(){
@@ -801,9 +813,23 @@ function defaultData(){
       heartEr:3
     },
     organization:defaultOrganization(),
-    employees:[],
-    payrollRuns:[]
+    employees:demoEmployees(),
+    payrollRuns:[],
+    isDemo:true
   };
+}
+
+// Wipe demo content and start with an empty roster, keeping organization
+// info and tax settings the user may have already customized.
+function clearAllData(){
+  if(!confirm('Clear all employees and payroll history?\n\nThis removes the sample data so you can enter your own. Your organization info and tax settings will be kept. This cannot be undone.'))return;
+  DATA.employees=[];
+  DATA.payrollRuns=[];
+  DATA.isDemo=false;
+  markDataDirty();saveStore();
+  showNotification('All data cleared — start adding your own employees!');
+  if(typeof refreshActiveSections==='function')refreshActiveSections();
+  showPage('employees');
 }
 
 function loadStore(){
@@ -1025,6 +1051,8 @@ function refreshAllData(){
 
 // ==================== DASHBOARD ====================
 function renderDashboard(){
+  const banner=document.getElementById('demoBanner');
+  if(banner)banner.style.display=DATA.isDemo?'flex':'none';
   const emps=DATA.employees;
   const runs=DATA.payrollRuns;
   const ftCount=emps.filter(e=>e.type==='FT').length;
@@ -2331,7 +2359,7 @@ function escapeHtml(text){
 
 // Storage keys — matching dashboard
 const USERS_KEY='dashboardUsers';
-const PERMS_KEY='cestisPermissions';
+const PERMS_KEY='payrollPermissions';
 let currentUser=null;
 let permTimerInterval=null;
 
@@ -2351,18 +2379,6 @@ const defaultUsers=[{
 }];
 
 function getDefaultUsers(){return JSON.parse(JSON.stringify(defaultUsers));}
-
-// Migrate from old cestisUsers key to new dashboardUsers key
-(function migrateUsersKey(){
-  var oldKey='cestisUsers';
-  var oldData=localStorage.getItem(oldKey);
-  var newData=localStorage.getItem(USERS_KEY);
-  if(oldData&&!newData){
-    localStorage.setItem(USERS_KEY,oldData);
-    localStorage.removeItem(oldKey);
-    console.log('[Migration] Migrated user data from cestisUsers to dashboardUsers');
-  }
-})();
 
 let users=JSON.parse(localStorage.getItem(USERS_KEY)||'null')||getDefaultUsers();
 
