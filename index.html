@@ -293,6 +293,15 @@ tbody tr:hover td{background:var(--primary-glow)}
 .demo-banner-text{font-size:.88rem;color:var(--text);line-height:1.5;max-width:640px}
 .demo-banner-text strong{color:var(--primary);font-weight:700;margin-right:.35rem}
 .demo-banner-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+
+/* Onboarding modal choices */
+.onboarding-choices{display:flex;flex-direction:column;gap:.75rem}
+.onboarding-choice{display:flex;align-items:center;gap:1rem;padding:1rem 1.1rem;background:#fff;border:1px solid var(--border);border-radius:12px;cursor:pointer;text-align:left;font-family:inherit;color:var(--text);transition:all .15s}
+.onboarding-choice:hover{border-color:var(--primary);background:var(--primary-glow);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.onboarding-choice.primary{background:linear-gradient(135deg,rgba(79,70,229,.08),rgba(245,158,11,.05));border-color:rgba(79,70,229,.25)}
+.onboarding-choice-icon{font-size:1.75rem;flex-shrink:0}
+.onboarding-choice-title{font-size:.95rem;font-weight:700}
+.onboarding-choice-sub{font-size:.78rem;color:var(--text-dim);margin-top:.15rem;line-height:1.45}
 </style>
 </head>
 <body>
@@ -768,6 +777,32 @@ tbody tr:hover td{background:var(--primary-glow)}
   </div>
 </div>
 
+<!-- Onboarding Modal (shown when no data exists) -->
+<div class="modal-overlay" id="onboardingModal" style="z-index:600">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header"><h3>Welcome — let's get you started</h3></div>
+    <div class="modal-body">
+      <p style="color:var(--text-dim);font-size:.9rem;line-height:1.55;margin-bottom:1.1rem">You don't have any payroll data yet. Choose how you'd like to begin:</p>
+      <div class="onboarding-choices">
+        <button class="onboarding-choice primary" onclick="onboardingLoadDemo()">
+          <div class="onboarding-choice-icon">📦</div>
+          <div class="onboarding-choice-text">
+            <div class="onboarding-choice-title">Load Sample Data</div>
+            <div class="onboarding-choice-sub">5 demo employees + 6 months of payroll runs. Great for exploring every page.</div>
+          </div>
+        </button>
+        <button class="onboarding-choice" onclick="onboardingAddFirst()">
+          <div class="onboarding-choice-icon">👤</div>
+          <div class="onboarding-choice-text">
+            <div class="onboarding-choice-title">Add My First Employee</div>
+            <div class="onboarding-choice-sub">Start with an empty system and enter your own staff records.</div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ==================== DATA STORE ====================
 const STORAGE_KEY = 'payrollData';
@@ -911,6 +946,43 @@ function loadDemoData(){
   showNotification('Sample data loaded — explore every page!');
   if(typeof refreshActiveSections==='function')refreshActiveSections();
   showPage('dashboard');
+}
+
+// ==================== ONBOARDING ====================
+// When the user has no employees and no payroll runs, force a choice on
+// page load: load the sample demo or add their first employee. No close
+// button — the modal blocks interaction until one of the actions runs.
+function shouldShowOnboarding(){
+  return DATA.employees.length===0&&DATA.payrollRuns.length===0;
+}
+function showOnboardingIfEmpty(){
+  var modal=document.getElementById('onboardingModal');
+  if(!modal)return;
+  if(shouldShowOnboarding())modal.classList.add('show');
+  else modal.classList.remove('show');
+}
+function hideOnboardingIfOpen(){
+  var modal=document.getElementById('onboardingModal');
+  if(modal)modal.classList.remove('show');
+}
+function onboardingLoadDemo(){
+  hideOnboardingIfOpen();
+  // Bypass the confirm prompt in loadDemoData since we know data is empty.
+  var demo=defaultData();
+  DATA.employees=demo.employees;
+  DATA.payrollRuns=demo.payrollRuns;
+  DATA.organization=demo.organization;
+  DATA.isDemo=true;
+  DATA.demoVersion=DEMO_VERSION;
+  markDataDirty();saveStore();
+  applyOrgBranding();
+  showNotification('Sample data loaded — explore every page!');
+  showPage('dashboard');
+}
+function onboardingAddFirst(){
+  hideOnboardingIfOpen();
+  showPage('employees');
+  openEmployeeModal();
 }
 
 function loadStore(){
@@ -1278,6 +1350,7 @@ function saveEmployee(){
   }
   else DATA.employees.push(emp);
   markDataDirty();saveStore();closeEmployeeModal();renderEmployees();refreshActiveSections();
+  if(DATA.employees.length>0)hideOnboardingIfOpen();
 }
 
 function deleteEmployee(i){
@@ -2854,6 +2927,11 @@ document.addEventListener('DOMContentLoaded',function(){
 
     // Render the dashboard immediately
     renderDashboard();
+
+    // If the app has no data at all, force the user to pick: load
+    // sample data or add their first employee. Modal has no close
+    // button so the choice can't be skipped.
+    showOnboardingIfEmpty();
 
     // Local autosave every 15s
     startAutoSave();
